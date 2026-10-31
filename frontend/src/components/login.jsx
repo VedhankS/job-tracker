@@ -6,28 +6,40 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { authFetch, login } = useAuth();
+
+  // Removed authFetch, kept login
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const cleanEmail = email.trim().toLowerCase()
+  const cleanEmail = email.trim().toLowerCase();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
     try {
-      const res = await authFetch('/login', {
+      // Swapped authFetch to standard fetch and added headers
+      const res = await fetch('/login', {
         method: 'POST',
-        body: JSON.stringify({ email:cleanEmail, password }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: cleanEmail, password }),
       });
-      const data = await res.json();
+
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Login failed: Invalid email or password');
         return;
       }
+
       login(data.access_token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'An error occurred during login');
     }
   };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">

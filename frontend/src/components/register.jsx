@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+// Removed useAuth import completely since Register doesn't need it anymore
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { authFetch } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,8 +15,12 @@ export default function Register() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const res = await authFetch('/register', {
+      // Swapped authFetch to standard fetch and added headers
+      const res = await fetch('/register', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ email: cleanEmail, password }),
       });
 
