@@ -21,7 +21,7 @@ This project uses 5 independent Docker containers:
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/VedhankS/job-tracker.git](https://github.com/VedhankS/job-tracker.git)
+   git clone https://github.com/VedhankS/job-tracker.git
    cd job-tracker
    ```
 
