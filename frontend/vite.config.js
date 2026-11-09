@@ -12,7 +12,12 @@ export default defineConfig({
       '/register': 'http://nginx:80',
       '/login': 'http://nginx:80',
       '/jobs': 'http://nginx:80',
+      '/resume': 'http://nginx:80',
       '/health': 'http://nginx:80',
+      '/ai': {
+        target: 'http://nginx:80',
+        changeOrigin: true,
+      },
     },
   },
 })

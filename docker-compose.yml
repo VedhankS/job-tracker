@@ -10,16 +10,36 @@ services:
     ports:
       - "5432:5432"
 
+  ai-service:
+    image: jobtracker-ai-service:latest
+    build:
+      context: ./ai-service
+    ports:
+      - "5002:5002"
+    environment:
+      # Bridges the container to your Mac's native GPU-accelerated Ollama
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Saves ChromaDB vector database
+      - ./ai-service/chroma_store:/app/chroma_store
+    restart: unless-stopped
+
   api-service:
+    image: jobtracker-api-service:latest
     build: ./api-service
     restart: on-failure
     environment:
       - DATABASE_URL=postgresql+psycopg2://postgres:supersecretpassword@db:5432/jobtracker
       - JWT_SECRET_KEY=dev-secret-key-change-in-prod
+      - AI_SERVICE_URL=http://ai-service:5002
     depends_on:
       - db
+      - ai-service
 
   auth-service:
+    image: jobtracker-auth-service:latest
     build: ./auth-service
     restart: on-failure
     environment:
@@ -37,8 +57,10 @@ services:
     depends_on:
       - api-service
       - auth-service
+      - ai-service
 
   frontend:
+    image: jobtracker-frontend:latest
     build: ./frontend
     ports:
       - "5173:5173"

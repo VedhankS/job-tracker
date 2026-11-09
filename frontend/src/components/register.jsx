@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-// Removed useAuth import completely since Register doesn't need it anymore
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -15,7 +14,6 @@ export default function Register() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      // Swapped authFetch to standard fetch and added headers
       const res = await fetch('/register', {
         method: 'POST',
         headers: {
@@ -38,24 +36,27 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md border border-gray-100">
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Create an Account</h2>
+    <div className="min-h-screen flex items-center justify-center bg-[#faf7f2] p-4 text-stone-800">
+      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-sm border border-[#e2d8c8]">
+        <h1 className="text-2xl font-bold text-center text-orange-600 mb-1">JobTracker</h1>
+        <p className="text-center text-xs text-stone-500 mb-6">Create a new account</p>
+
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4 text-sm">
+          <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded text-xs mb-4">
             {error}
           </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-xs font-medium text-stone-700 mb-1">Email</label>
             <input
-              type="text"
+              type="email"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck="false"
               placeholder="user@example.com"
-              className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:outline-none"
+              className="w-full p-2.5 bg-white border border-[#d6cbba] rounded text-stone-900 placeholder-stone-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -63,11 +64,11 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-xs font-medium text-stone-700 mb-1">Password</label>
             <input
               type="password"
-              placeholder="••••••••"
-              className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:outline-none"
+              placeholder="Enter your password"
+              className="w-full p-2.5 bg-white border border-[#d6cbba] rounded text-stone-900 placeholder-stone-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -76,14 +77,15 @@ export default function Register() {
 
           <button
             type="submit"
-            className="w-full bg-green-600 text-white font-medium p-2.5 rounded hover:bg-green-700 transition"
+            className="w-full bg-blue-600 text-white font-medium p-2.5 rounded hover:bg-blue-500 transition text-sm shadow-2xs"
           >
             Register
           </button>
         </form>
-        <p className="text-center text-sm text-gray-600 mt-4">
+
+        <p className="text-center text-sm text-stone-600 mt-5">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline font-medium">
+          <Link to="/login" className="text-orange-600 hover:text-orange-700 hover:underline font-medium">
             Login
           </Link>
         </p>
