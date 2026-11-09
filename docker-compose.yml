@@ -2,9 +2,9 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: supersecretpassword
-      POSTGRES_DB: jobtracker
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -30,8 +30,8 @@ services:
     build: ./api-service
     restart: on-failure
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:supersecretpassword@db:5432/jobtracker
-      - JWT_SECRET_KEY=dev-secret-key-change-in-prod
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?set JWT_SECRET_KEY in .env}
       - AI_SERVICE_URL=http://ai-service:5002
     depends_on:
       - db
@@ -42,8 +42,8 @@ services:
     build: ./auth-service
     restart: on-failure
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:supersecretpassword@db:5432/jobtracker
-      - JWT_SECRET_KEY=dev-secret-key-change-in-prod
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?set JWT_SECRET_KEY in .env}
     depends_on:
       - db
 

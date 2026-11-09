@@ -88,3 +88,4 @@ docker compose down -v
 ```
 
 **Note:** Removing volumes deletes persisted database data. Configure production secrets and database credentials securely before deployment.
+**Note:** Copy .env.example to .env and fill in the values before running docker compose up
