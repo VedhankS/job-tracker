@@ -17,7 +17,6 @@ services:
     ports:
       - "5002:5002"
     environment:
-      # Bridges the container to your Mac's native GPU-accelerated Ollama
       - OLLAMA_HOST=http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
