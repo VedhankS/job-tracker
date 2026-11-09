@@ -1,73 +1,90 @@
-# Job Tracker - Full-Stack Microservices Application
+# Job Tracker
 
-A containerized full-stack application for tracking job applications using a microservices architecture with independent Flask APIs, a React frontend, a PostgreSQL database, and an Nginx reverse proxy.
+A full-stack job tracking application built with React, Flask, and PostgreSQL. It includes separate services for authentication, job management, and AI functionality.
 
-## Architecture & Tech Stack
+## Tech Stack
 
-This project uses 5 independent Docker containers:
-- **Frontend (`frontend`)**: React + Vite, Tailwind CSS v4, React Router.
-- **Authentication Service (`auth-service`)**: Python Flask API for user registration, login, and JWT generation.
-- **Jobs API Service (`api-service`)**: Python Flask API for job application CRUD operations.
-- **Database (`db`)**: PostgreSQL database.
-- **Reverse Proxy (`nginx`)**: Nginx server routing traffic to the Flask microservices.
-
-## Getting Started
-
-### Prerequisites
-- Docker Desktop
-- Git
-
-### Installation & Running
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/VedhankS/job-tracker.git
-   cd job-tracker
-   ```
-
-2. Start the Docker Compose cluster:
-   ```bash
-   docker compose up --build -d
-   ```
-
-3. Access the application:
-   - Navigate to `http://127.0.0.1:5173` in your browser.
-   - The Nginx reverse proxy runs internally on port 8080.
-
-### Stopping the Application
-
-Stop containers and preserve database data:
-```bash
-docker compose down
-```
-
-Stop containers and wipe database data:
-```bash
-docker compose down -v
-```
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend:** Python, Flask
+- **Database:** PostgreSQL
+- **AI:** Ollama, ChromaDB
+- **Infrastructure:** Docker, Docker Compose, Nginx
 
 ## Project Structure
 
 ```text
 job-tracker/
-├── api-service/          # Flask app for Job CRUD (Port 5000)
-├── auth-service/         # Flask app for JWT Auth (Port 5001)
-├── frontend/             # React/Vite application (Port 5173)
-├── nginx.conf            # Nginx routing (Port 8080)
-├── docker-compose.yml    # Docker orchestration
-└── README.md
+├── ai-service/
+├── api-service/
+├── auth-service/
+├── frontend/
+├── docker-compose.yml
+└── nginx.conf
 ```
 
-## API Endpoints & Routing
+## Getting Started
 
-| Route | Method | Handled By | Description |
-|---|---|---|---|
-| `/register` | POST | `auth-service` | Creates a new user account. |
-| `/login` | POST | `auth-service` | Authenticates user and returns JWT. |
-| `/jobs` | GET | `api-service` | Retrieves all jobs for the authenticated user. |
-| `/jobs` | POST | `api-service` | Adds a new job application. |
-| `/jobs/<id>` | DELETE | `api-service` | Deletes a specific job application. |
-| `/health` | GET | `api-service` | Verifies the API is online. |
+### Prerequisites
 
-## Notes for macOS Users
-If `localhost:5173` fails to load, use `http://127.0.0.1:5173` directly to bypass IPv6 network resolution issues.
+- Docker and Docker Compose
+- Ollama running on the host machine
+- Git
+
+### Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/VedhankS/job-tracker.git
+   cd job-tracker
+   ```
+
+2. Start the application:
+
+   ```bash
+   docker compose up --build
+   ```
+
+3. Open the application:
+
+   ```text
+   http://localhost:5173
+   ```
+
+## Services
+
+| Service | Description |
+|---|---|
+| Frontend | React user interface |
+| Auth Service | User registration and login |
+| API Service | Job management API |
+| AI Service | AI-related functionality |
+| Database | PostgreSQL data storage |
+| Nginx | Reverse proxy |
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/register` | Register a user |
+| POST | `/login` | Log in |
+| GET | `/jobs` | Retrieve jobs |
+| POST | `/jobs` | Create a job |
+| DELETE | `/jobs/:id` | Delete a job |
+| GET | `/health` | Check API health |
+
+API requests are routed through Nginx at `http://localhost:8080`.
+
+## Stopping the Application
+
+```bash
+docker compose down
+```
+
+To remove the database volume as well:
+
+```bash
+docker compose down -v
+```
+
+**Note:** Removing volumes deletes persisted database data. Configure production secrets and database credentials securely before deployment.
