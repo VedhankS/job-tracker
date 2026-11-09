@@ -1,0 +1,141 @@
+import llm
+import rag
+import ollama
+import re
+from typing import TypedDict
+from langgraph.graph import StateGraph, END
+
+class GraphState(TypedDict):
+    jd_text: str
+    analysis: dict
+    match_data: dict
+    tailored_bullets: list
+    prep_questions: list
+
+def get_skills_safely(analysis_dict: dict) -> list:
+    if not analysis_dict:
+        return []
+    # Fallback to catch LLM key hallucinations
+    return analysis_dict.get("required_skills") or analysis_dict.get("skills") or []
+
+def analyze_node(state: GraphState):
+    print("Agent: Analyzing JD...")
+    return {"analysis": llm.analyze_jd(state.get("jd_text", ""))}
+
+def match_node(state: GraphState):
+    print("Agent: Matching Skills against Resume...")
+    skills = get_skills_safely(state.get("analysis", {}))
+
+    if not skills:
+        return {"match_data": {"score": 0, "matches": []}}
+
+    chunk_dict = {}
+    for skill in skills:
+        for res in rag.search(skill, k=2):
+            chunk_dict[res["id"]] = {"id": res["id"], "text": res["text"]}
+
+    if not chunk_dict:
+        return {
+            "match_data": {
+                "score": 0,
+                "matches": [
+                    {"skill": s, "status": "missing", "source_chunk_id": None, "reasoning": "No matching resume chunks found. Please index your resume."}
+                    for s in skills
+                ]
+            }
+        }
+
+    match_data = llm.evaluate_match(skills, list(chunk_dict.values()))
+    return {"match_data": match_data}
+
+def tailor_node(state: GraphState):
+    print("Agent: Tailoring Bullets...")
+    skills = get_skills_safely(state.get("analysis", {}))
+    query = " ".join(skills) if skills else "machine learning"
+
+    retrieved = rag.search(query, k=5)
+    chunks = [{"id": r["id"], "text": r["text"]} for r in retrieved]
+    if not chunks:
+        return {"tailored_bullets": []}
+
+    valid_ids = {c["id"] for c in chunks}
+
+    # Safe extraction of bullets
+    tailor_results = llm.generate_bullets(state.get("jd_text", ""), chunks) or {}
+    raw_bullets = tailor_results.get("bullets") or []
+
+    valid_bullets = [b for b in raw_bullets if isinstance(b, dict) and b.get("source_chunk_id") in valid_ids]
+    return {"tailored_bullets": valid_bullets}
+
+def extract_questions_from_raw_text(text: str) -> list[str]:
+    lines = text.split('\n')
+    questions = []
+    current_q = []
+    in_criteria = False
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        lower = stripped.lower()
+        if lower.startswith('here are') or lower.startswith('note:'):
+            continue
+        if 'assessment criteria' in lower:
+            in_criteria = True
+            continue
+        if re.match(r'^(?:\d+[\.\)]|\*\*\d+[\.\)]|\*\*Question\s*\d*|\d+\.\s*\*?\*?Question)', stripped, re.IGNORECASE):
+            in_criteria = False
+            if current_q:
+                questions.append(' '.join(current_q).strip())
+                current_q = []
+            clean = re.sub(r'^(?:\d+[\.\)]\s*\*?\*?Question\s*[:.-]?\s*\*?\*?|\d+[\.\)]|\*\*Question\s*[:.-]?\s*\*?\*?)\s*', '', stripped, flags=re.IGNORECASE)
+            current_q.append(clean)
+        elif not in_criteria and current_q:
+            if not stripped.startswith('*') and not stripped.startswith('-'):
+                current_q.append(stripped)
+
+    if current_q:
+        questions.append(' '.join(current_q).strip())
+    return [q for q in questions if len(q) > 10][:3]
+
+def prep_node(state: GraphState):
+    print("Agent: Generating Interview Questions...")
+    match_data = state.get("match_data") or {}
+    matches = match_data.get("matches") or []
+
+    missing = [m.get("skill") for m in matches if isinstance(m, dict) and m.get("status") == "missing" and m.get("skill")]
+
+    # 1. Primary: Structured JSON output with strict schema
+    questions = llm.generate_prep_questions(missing)
+    if questions:
+        return {"prep_questions": questions}
+
+    # 2. Fallback: Prompt and regex-extract clean questions, discarding criteria and intro lines
+    missing_str = ", ".join(missing) if missing else "general software engineering"
+    prompt = f"Generate 3 short, technical interview questions to test a candidate on these skills: {missing_str}. Provide ONLY the questions without introductory sentences, assessment criteria, or notes."
+    try:
+        res = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
+        fallback_qs = extract_questions_from_raw_text(res.get('message', {}).get('content', ''))
+        if fallback_qs:
+            return {"prep_questions": fallback_qs}
+    except Exception as e:
+        print(f"Fallback prep generation error: {e}")
+
+    return {"prep_questions": []}
+
+workflow = StateGraph(GraphState)
+workflow.add_node("analyze", analyze_node)
+workflow.add_node("match", match_node)
+workflow.add_node("tailor", tailor_node)
+workflow.add_node("prep", prep_node)
+
+workflow.set_entry_point("analyze")
+workflow.add_edge("analyze", "match")
+workflow.add_edge("match", "tailor")
+workflow.add_edge("tailor", "prep")
+workflow.add_edge("prep", END)
+
+agent_app = workflow.compile()
+
+def run_agent(jd_text: str):
+    return agent_app.invoke({"jd_text": jd_text})
