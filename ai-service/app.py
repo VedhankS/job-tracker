@@ -5,7 +5,7 @@ import llm
 import agent
 import traceback
 import io
-
+import os
 try:
     import pypdf
 except ImportError:
@@ -23,7 +23,18 @@ def extract_text_from_pdf(stream) -> str:
     return "\n\n".join(pages_text)
 
 app = Flask(__name__)
-CORS(app)
+
+frontend_origins = os.environ.get(
+    "FRONTEND_ORIGIN",
+    "http://localhost:5173"
+).split(",")
+
+CORS(
+    app,
+    origins=[origin.strip() for origin in frontend_origins],
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+)
 
 @app.get("/health")
 def health():
