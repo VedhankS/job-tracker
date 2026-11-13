@@ -23,28 +23,37 @@ def analyze_node(state: GraphState):
 
 def match_node(state: GraphState):
     print("Agent: Matching Skills against Resume...")
+
     skills = get_skills_safely(state.get("analysis", {}))
 
     if not skills:
-        return {"match_data": {"score": 0, "matches": []}}
+        return {
+            "match_data": {
+                "score": 0,
+                "matches": []
+            }
+        }
+    chunks = rag.get_all_chunks()
 
-    chunk_dict = {}
-    for skill in skills:
-        for res in rag.search(skill, k=2):
-            chunk_dict[res["id"]] = {"id": res["id"], "text": res["text"]}
-
-    if not chunk_dict:
+    if not chunks:
         return {
             "match_data": {
                 "score": 0,
                 "matches": [
-                    {"skill": s, "status": "missing", "source_chunk_id": None, "reasoning": "No matching resume chunks found. Please index your resume."}
-                    for s in skills
+                    {
+                        "skill": skill,
+                        "status": "missing",
+                        "source_chunk_id": None,
+                        "reasoning": "No resume chunks found. Please upload and index your resume."
+                    }
+                    for skill in skills
                 ]
             }
         }
 
-    match_data = llm.evaluate_match(skills, list(chunk_dict.values()))
+    # Evaluate each required skill against the complete resume
+    match_data = llm.evaluate_match(skills, chunks)
+
     return {"match_data": match_data}
 
 def tailor_node(state: GraphState):
