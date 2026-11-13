@@ -1,5 +1,8 @@
+
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+
+const AUTH_API_URL = "https://job-tracker-r0ko.onrender.com";
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -14,7 +17,7 @@ export default function Register() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const res = await fetch('/register', {
+      const res = await fetch(`${AUTH_API_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
