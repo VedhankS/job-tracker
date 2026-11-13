@@ -42,7 +42,6 @@ export default function CopilotPanel({ job, onSaveToTracker, onJobUpdated }) {
       try {
         const fallbackRes = await fetch('/ai/agent/run', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: jdText.trim() }),
         });
         if (!fallbackRes.ok) throw new Error('AI Service unreachable');
@@ -51,7 +50,7 @@ export default function CopilotPanel({ job, onSaveToTracker, onJobUpdated }) {
       } catch (fallbackErr) {
         setError(
           err.message.includes('Failed to connect') || err.message.includes('unreachable')
-            ? 'Cannot reach AI service or Ollama. Ensure Ollama is running locally (`ollama run llama3.2`).'
+            ? 'Cannot reach the deployed AI service. Please try again later.'
             : err.message
         );
       }
