@@ -1,6 +1,5 @@
 import llm
 import rag
-import ollama
 import re
 from typing import TypedDict
 from langgraph.graph import StateGraph, END
@@ -98,30 +97,25 @@ def extract_questions_from_raw_text(text: str) -> list[str]:
         questions.append(' '.join(current_q).strip())
     return [q for q in questions if len(q) > 10][:3]
 
+
 def prep_node(state: GraphState):
     print("Agent: Generating Interview Questions...")
+
     match_data = state.get("match_data") or {}
     matches = match_data.get("matches") or []
 
-    missing = [m.get("skill") for m in matches if isinstance(m, dict) and m.get("status") == "missing" and m.get("skill")]
+    missing = [
+        m.get("skill")
+        for m in matches
+        if isinstance(m, dict)
+        and m.get("status") == "missing"
+        and m.get("skill")
+    ]
 
-    # 1. Primary: Structured JSON output with strict schema
     questions = llm.generate_prep_questions(missing)
-    if questions:
-        return {"prep_questions": questions}
 
-    # 2. Fallback: Prompt and regex-extract clean questions, discarding criteria and intro lines
-    missing_str = ", ".join(missing) if missing else "general software engineering"
-    prompt = f"Generate 3 short, technical interview questions to test a candidate on these skills: {missing_str}. Provide ONLY the questions without introductory sentences, assessment criteria, or notes."
-    try:
-        res = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
-        fallback_qs = extract_questions_from_raw_text(res.get('message', {}).get('content', ''))
-        if fallback_qs:
-            return {"prep_questions": fallback_qs}
-    except Exception as e:
-        print(f"Fallback prep generation error: {e}")
+    return {"prep_questions": questions}
 
-    return {"prep_questions": []}
 
 workflow = StateGraph(GraphState)
 workflow.add_node("analyze", analyze_node)
