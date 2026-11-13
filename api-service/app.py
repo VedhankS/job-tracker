@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from sqlalchemy import inspect, text
@@ -49,6 +50,17 @@ class Job(db.Model):
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    frontend_origins = os.environ.get(
+        "FRONTEND_ORIGIN",
+        "http://localhost:5173"
+    ).split(",")
+
+    CORS(
+        app,
+        origins=[origin.strip() for origin in frontend_origins],
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    )
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///jobs.db")
     app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dev-secret-key-change-in-prod")
     app.config["AI_SERVICE_URL"] = os.environ.get("AI_SERVICE_URL", "http://ai-service:5002")
