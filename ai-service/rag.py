@@ -43,3 +43,14 @@ def search(query,k = 3):
         {"id":doc_id, "text":doc, "distance":round(dist,4)}
         for doc_id, doc, dist in zip(res["ids"][0], res["documents"][0], res["distances"][0])
     ]
+def get_all_chunks():
+    """Return every indexed resume chunk for comprehensive matching."""
+    result = collection.get(include=["documents"])
+
+    return [
+        {"id": chunk_id, "text": document}
+        for chunk_id, document in zip(
+            result["ids"],
+            result["documents"]
+        )
+    ]
