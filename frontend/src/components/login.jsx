@@ -1,6 +1,9 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+
+const AUTH_API_URL = "https://job-tracker-r0ko.onrender.com";
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,7 +19,7 @@ export default function Login() {
     setError('');
 
     try {
-      const res = await fetch('/login', {
+      const res = await fetch(`${AUTH_API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -28,6 +31,11 @@ export default function Login() {
 
       if (!res.ok) {
         setError(data.error || 'Login failed: Invalid email or password');
+        return;
+      }
+
+      if (!data.access_token) {
+        setError('Login failed: Authentication token was not returned');
         return;
       }
 
